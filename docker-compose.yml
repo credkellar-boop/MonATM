@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  node-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: monatm_engine
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./Config.toml:/app/Config.toml
+      - /dev/ttyUSB0:/dev/ttyUSB0 # Passes through physical hardware devices if needed
+    ports:
+      - "8080:8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
