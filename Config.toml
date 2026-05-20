@@ -1,0 +1,18 @@
+[network]
+rpc_url = "https://mainnet.monad.xyz"
+request_timeout_ms = 5000
+retry_attempts = 3
+
+[hardware]
+device_path = "/dev/ttyUSB0"
+baud_rate = 115200
+encryption_enabled = true
+
+[vault]
+max_cash_dispense_limit = 5000
+multi_sig_threshold = 2
+idle_timeout_seconds = 300
+
+[logging]
+level = "info"
+format = "json"
