@@ -4,11 +4,13 @@ pub struct BalanceInquiry {
 
 impl BalanceInquiry {
     pub fn new(account_id: &str) -> Self {
-        Self { target_account_id: account_id.to_string() }
+        Self {
+            target_account_id: account_id.to_string(),
+        }
     }
 
     pub fn run_balance_check(&self) -> u32 {
         println!("[Ledger Query] Accessing routing file records for ID: {}", self.target_account_id);
-        5250 // Mock current dollar balance returned safely from centralized indexer
+        5250
     }
 }
