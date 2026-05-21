@@ -23,22 +23,28 @@ MonATM is a modular, high-performance engine written in Rust for managing secure
 
 docker-compose up --build
 
-cargo test
+## 🏗 Project Structure
 
- monatm/
-├── .github/          # CI/CD workflows for automated testing
-├── src/              # Core application source code
-│   ├── auth/         # Security & Identity (PIN validation)
-│   ├── crypto/       # Blockchain interface & Wallet management
-│   ├── hardware/     # Hardware Abstraction Layer (HAL)
-│   ├── models/       # Data structures (Account, Ledger, Card)
-│   ├── states/       # Finite State Machine (Transaction flows)
-│   ├── transactions/ # Business logic (Lending, Off-ramps)
-│   ├── controller.rs # Main engine loop & state machine orchestrator
-│   └── main.rs       # Application entry point
-├── tests/            # Integration & race-condition tests
-├── Cargo.toml        # Dependency & project configuration
-├── Config.toml       # Runtime environment & hardware settings
+The project follows a modular, domain-driven architecture:
+
+```text
+monatm/
+├── .github/              # CI/CD workflows for automated testing
+├── src/                  # Core application source code
+│   ├── auth/             # Security & Identity (PIN validation)
+│   ├── crypto/           # Blockchain interface & Wallet management
+│   ├── hardware/         # Hardware Abstraction Layer (HAL)
+│   ├── models/           # Data structures (Account, Ledger, Card)
+│   ├── states/           # Finite State Machine (Transaction flows)
+│   ├── transactions/     # Business logic (Lending, Off-ramps)
+│   ├── controller.rs     # Main engine loop & state machine orchestrator
+│   └── main.rs           # Application entry point
+├── tests/                # Integration & race-condition tests
+├── Cargo.toml            # Dependency & project configuration
+├── Config.toml           # Runtime environment & hardware settings
+├── Dockerfile            # Multi-stage Docker build
+└── docker-compose.yml    # Container orchestration
+ Runtime environment & hardware settings
 ├── Dockerfile        # Multi-stage Docker build
 └── docker-compose.yml# Container orchestration
 
