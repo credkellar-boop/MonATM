@@ -71,3 +71,8 @@ async fn main() -> Result<(), String> {
     println!("==================================================");
     Ok(())
 }
+mod hardware;
+mod deposit;
+mod crypto;
+mod states;
+// ... any other missing top-level modules
