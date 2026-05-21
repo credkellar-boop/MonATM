@@ -25,9 +25,9 @@ docker-compose up --build
 
 cargo test
 
-monatm/
+ monatm/
 ├── .github/          # CI/CD workflows for automated testing
-├── src/              # Main application source code
+├── src/              # Core application source code
 │   ├── auth/         # Security & Identity (PIN validation)
 │   ├── crypto/       # Blockchain interface & Wallet management
 │   ├── hardware/     # Hardware Abstraction Layer (HAL)
@@ -35,10 +35,10 @@ monatm/
 │   ├── states/       # Finite State Machine (Transaction flows)
 │   ├── transactions/ # Business logic (Lending, Off-ramps)
 │   ├── controller.rs # Main engine loop & state machine orchestrator
-│   ├── deposit.rs    # High-level deposit handler
 │   └── main.rs       # Application entry point
 ├── tests/            # Integration & race-condition tests
 ├── Cargo.toml        # Dependency & project configuration
 ├── Config.toml       # Runtime environment & hardware settings
-├── Dockerfile        # Containerization build steps
-└── docker-compose.yml# Deployment orchestration
+├── Dockerfile        # Multi-stage Docker build
+└── docker-compose.yml# Container orchestration
+
