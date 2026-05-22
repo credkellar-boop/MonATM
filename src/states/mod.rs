@@ -1,5 +1,10 @@
+// src/states/mod.rs
+
 use async_trait::async_trait;
 use std::fmt::Debug;
+use uuid::Uuid;
+
+use crate::auth::secure_auth::SecureAuthService;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum StateMachineStatus {
@@ -12,7 +17,7 @@ pub enum StateMachineStatus {
 }
 
 pub struct SystemContext {
-    pub current_status: StateMachineStatus,
+    pub current_state: StateMachineStatus,
     pub session_id: Option<String>,
     pub verified_identity: Option<String>,
     pub selected_token: Option<String>,
@@ -25,7 +30,9 @@ pub trait AtmState: Debug {
     fn status(&self) -> StateMachineStatus;
 }
 
-// --- IDLE STATE ---
+// ==========================================
+// 1. IDLE STATE
+// ==========================================
 #[derive(Debug)]
 pub struct IdleState;
 
@@ -33,52 +40,130 @@ pub struct IdleState;
 impl AtmState for IdleState {
     async fn handle_input(&self, context: &mut SystemContext, input: &str) -> Result<Box<dyn AtmState>, String> {
         if input == "card_inserted" {
-            context.session_id = Some(uuid::Uuid::new_v4().to_string());
-            context.current_status = StateMachineStatus::PinEntry;
+            context.session_id = Some(Uuid::new_v4().to_string());
+            context.current_state = StateMachineStatus::PinEntry;
             Ok(Box::new(PinEntryState))
         } else {
             Ok(Box::new(IdleState))
         }
     }
-    fn status(&self) -> StateMachineStatus { StateMachineStatus::Idle }
+
+    fn status(&self) -> StateMachineStatus {
+        StateMachineStatus::Idle
+    }
 }
 
-// --- PIN ENTRY STATE ---
+// ==========================================
+// 2. PIN ENTRY STATE
+// ==========================================
 #[derive(Debug)]
 pub struct PinEntryState;
 
 #[async_trait]
 impl AtmState for PinEntryState {
     async fn handle_input(&self, context: &mut SystemContext, input: &str) -> Result<Box<dyn AtmState>, String> {
-        // Simple 4-digit mock validation for identity isolation
+        // Enforce basic structural format matching
         if input.len() == 4 && input.chars().all(|c| c.is_numeric()) {
-            context.verified_identity = Some(format!("user_pubkey_hash_{}", input));
-            context.current_status = StateMachineStatus::TxSelect;
-            Ok(Box::new(TxSelectState))
+            
+            // Extract token cached from card reader insertion (Fallback to default mock identifier if empty)
+            let hardware_card_token = context.session_id.as_deref().unwrap_or("MOCKED_CARD_TOKEN_99812A");
+            
+            // Authenticate input securely against cryptographic verification sub-layer
+            if SecureAuthService::verify_pin(hardware_card_token, input) {
+                context.verified_identity = Some(format!("user_pubkey_hash_{}", input));
+                context.current_state = StateMachineStatus::TxSelect;
+                Ok(Box::new(TxSelectState))
+            } else {
+                return Err("Invalid PIN configuration. Try again.".to_string());
+            }
         } else {
             return Err("Invalid PIN configuration. Try again.".to_string());
         }
     }
-    fn status(&self) -> StateMachineStatus { StateMachineStatus::PinEntry }
+
+    fn status(&self) -> StateMachineStatus {
+        StateMachineStatus::PinEntry
+    }
 }
 
-// --- TRANSACTION SELECT STATE ---
+// ==========================================
+// 3. TRANSACTION SELECT STATE
+// ==========================================
 #[derive(Debug)]
 pub struct TxSelectState;
 
 #[async_trait]
 impl AtmState for TxSelectState {
     async fn handle_input(&self, context: &mut SystemContext, input: &str) -> Result<Box<dyn AtmState>, String> {
-        // Expected format: "TOKEN:AMOUNT" (e.g., "USDT:100")
+        // Expected format: "TOKEN:AMOUNT" (e.g., "USDT:100" or "MON:250")
         let parts: Vec<&str> = input.split(':').collect();
+        
         if parts.len() == 2 {
-            context.selected_token = Some(parts[0].to_string());
-            context.target_fiat_amount = parts[1].parse::<u64>().map_err(|_| "Invalid amount requested")?;
-            context.current_status = StateMachineStatus::Complete;
-            Ok(Box::new(IdleState)) // Cycle routes back to ready state post execution
+            let token = parts[0].to_string();
+            let amount_res = parts[1].parse::<u64>();
+            
+            match amount_res {
+                Ok(amount) => {
+                    context.selected_token = Some(token);
+                    context.target_fiat_amount = amount;
+                    
+                    // Transition machine status directly over into processing hardware delivery loop
+                    context.current_state = StateMachineStatus::Dispensing;
+                    Ok(Box::new(DispensingState))
+                }
+                Err(_) => {
+                    context.current_state = StateMachineStatus::Idle;
+                    Ok(Box::new(IdleState))
+                }
+            }
         } else {
-            Err("Format selection missing properties. Use 'TOKEN:AMOUNT'.".to_string())
+            return Err("Format selection missing properties. Use 'TOKEN:AMOUNT'.".to_string());
         }
     }
-    fn status(&self) -> StateMachineStatus { StateMachineStatus::TxSelect }
+
+    fn status(&self) -> StateMachineStatus {
+        StateMachineStatus::TxSelect
+    }
+}
+
+// ==========================================
+// 4. DISPENSING STATE
+// ==========================================
+#[derive(Debug)]
+pub struct DispensingState;
+
+#[async_trait]
+impl AtmState for DispensingState {
+    async fn handle_input(&self, context: &mut SystemContext, _input: &str) -> Result<Box<dyn AtmState>, String> {
+        // Cycle states back cleanly to ready status post successful mechanical execution
+        context.current_state = StateMachineStatus::Complete;
+        Ok(Box::new(CompleteState))
+    }
+
+    fn status(&self) -> StateMachineStatus {
+        StateMachineStatus::Dispensing
+    }
+}
+
+// ==========================================
+// 5. TERMINAL COMPLETE STATE
+// ==========================================
+#[derive(Debug)]
+pub struct CompleteState;
+
+#[async_trait]
+impl AtmState for CompleteState {
+    async fn handle_input(&self, context: &mut SystemContext, _input: &str) -> Result<Box<dyn AtmState>, String> {
+        // Automatically reset and wipe runtime parameters for the next customer iteration session
+        context.session_id = None;
+        context.verified_identity = None;
+        context.selected_token = None;
+        context.target_fiat_amount = 0;
+        context.current_state = StateMachineStatus::Idle;
+        Ok(Box::new(IdleState))
+    }
+
+    fn status(&self) -> StateMachineStatus {
+        StateMachineStatus::Complete
+    }
 }
