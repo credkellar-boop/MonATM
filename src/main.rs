@@ -6,7 +6,7 @@ mod states;
 mod transactions;
 mod controller;
 
-use hardware::card_reader::CardReader;
+use auth::card_reader::CardReader;
 use hardware::cash_dispenser::CashDispenser;
 use crypto::oracle::ExchangeRateOracle;
 use crypto::wallet::HotWalletManager;
@@ -48,22 +48,26 @@ async fn main() -> Result<(), String> {
     context.target_fiat_amount = fiat_amount_requested;
 
     let deposit_address = HotWalletManager::generate_session_address("USDC");
+    
+    // Will compile smoothly now thanks to the oracle instance method fix
     let spot_price = oracle.get_spot_price("USDC").await?;
     
     let token_amount_required = (fiat_amount_requested as f64) / (spot_price.to_string().parse::<f64>().unwrap());
 
+    // Pulling these cleanly out from the declared submodule tree space
     let qr_screen = states::crypto_qr::CryptoQrState::new(&deposit_address, token_amount_required);
     qr_screen.display_matrix_payload();
 
     let wait_state = states::crypto_wait::CryptoWaitState::new(1);
     wait_state.display_status(0);
 
+    let dispenser_ref = &mut dispenser;
     let mut offramp = CryptoToCashOffRamp {
         fiat_requested: fiat_amount_requested as u32,
     };
     
     use transactions::crypto_offramp::OffRampTransaction;
-    offramp.execute(&mut dispenser).await?;
+    offramp.execute(dispenser_ref).await?;
 
     reader.eject_card();
     println!("\n=============================================");
