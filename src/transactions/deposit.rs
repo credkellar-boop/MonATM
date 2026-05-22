@@ -1,12 +1,12 @@
-// src/transactions/deposit.rs
+// Inside src/transactions/deposit.rs
+pub struct DepositEngine;
 
-pub fn process_deposit(amount: f64) -> Result<(), String> {
-    if amount <= 0.0 {
-        return Err("Deposit amount must be greater than zero.".to_string());
+impl DepositEngine {
+    pub fn process_deposit(amount: f64) -> Result<(), String> {
+        if amount <= 0.0 {
+            return Err("Deposit amount must be greater than zero.".to_string());
+        }
+        println!("Successfully processed deposit of ${:.2}", amount);
+        Ok(())
     }
-    
-    // TODO: Implement actual deposit logic, state updates, or Monad network interactions
-    println!("Successfully processed deposit of ${:.2}", amount);
-    
-    Ok(())
 }
