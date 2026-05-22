@@ -1,4 +1,6 @@
-// src/main.rs
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
 
 mod auth;
 mod crypto;
@@ -13,7 +15,7 @@ use hardware::cash_dispenser::CashDispenser;
 use crypto::oracle::ExchangeRateOracle;
 use crypto::wallet::HotWalletManager;
 use states::{SystemContext, AtmState};
-use transactions::crypto_offramp::CryptoToCashOffRamp;
+use transactions::crypto_offramp::{CryptoToCashOffRamp, OffRampTransaction};
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
@@ -35,7 +37,6 @@ async fn main() -> Result<(), String> {
 
     println!("\n[UI User Approaches Terminal...]");
     
-    // Safely capture Result wrapper
     let card_token = reader.scan_card()?;
     println!("Card processing event received token: {:?}", card_token);
     
@@ -52,13 +53,10 @@ async fn main() -> Result<(), String> {
     context.target_fiat_amount = fiat_amount_requested;
 
     let deposit_address = HotWalletManager::generate_session_address("USDC");
-    
-    // Solves your associated method compilation block cleanly
     let spot_price = oracle.get_spot_price("USDC").await?;
     
     let token_amount_required = (fiat_amount_requested as f64) / (spot_price.to_string().parse::<f64>().unwrap_or(1.0));
 
-    // Properly initialized based on child modules
     let qr_screen = states::crypto_qr::CryptoQrState::new(&deposit_address, token_amount_required);
     qr_screen.display_matrix_payload();
 
@@ -70,7 +68,6 @@ async fn main() -> Result<(), String> {
         fiat_requested: fiat_amount_requested as u32,
     };
     
-    use transactions::crypto_offramp::OffRampTransaction;
     offramp.execute(dispenser_ref).await?;
 
     reader.eject_card();
