@@ -26,6 +26,7 @@ MonATM is a modular, high-performance engine written in Rust for managing secure
 ======================================
 
 monatm/
+
 ├── .github/          # CI/CD workflows for testing and validation
 ├── src/              # Core application source code
 │   ├── auth/         # Security & Identity validation
