@@ -1,16 +1,24 @@
+#[derive(Debug, Clone)]
 pub struct CryptoQrState {
-    pub current_invoice_uri: String,
+    pub deposit_address: String,
+    pub amount_required: f64,
 }
 
 impl CryptoQrState {
-    pub fn new(address: &str, amount: &str) -> Self {
+    pub fn new(deposit_address: &str, amount_required: f64) -> Self {
         Self {
-            current_invoice_uri: format!("crypto:{}?amount={}", address, amount),
+            deposit_address: deposit_address.to_string(),
+            amount_required,
         }
     }
 
     pub fn display_matrix_payload(&self) {
-        println!("[UI Screen] Target Wallet Out-Ramp Established.");
-        println!("URI payload target: {}", self.current_invoice_uri);
+        println!("\n---------------------------------------------");
+        println!("       GENERATING ON-CHAIN ESCROW QR         ");
+        println!("---------------------------------------------");
+        println!("  Send Exactly: {:.6} Tokens", self.amount_required);
+        println!("  To Destination: {}", self.deposit_address);
+        println!("  [ MATRIX QR CODE PAYLOAD STUB ]");
+        println!("---------------------------------------------\n");
     }
 }
