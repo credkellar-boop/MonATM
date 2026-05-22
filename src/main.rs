@@ -77,3 +77,35 @@ async fn main() -> Result<(), String> {
 
     Ok(())
 }
+
+// =========================================================================
+// EMBEDDED INTERNAL TESTS (No root crate dependencies required)
+// =========================================================================
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::states::StateMachineStatus;
+
+    #[tokio::test]
+    async fn test_core_atm_state_transitions() {
+        let mut context = SystemContext {
+            current_state: StateMachineStatus::Idle,
+            session_id: None,
+            verified_identity: None,
+            selected_token: None,
+            target_fiat_amount: 0,
+        };
+
+        let initial_state: Box<dyn AtmState> = Box::new(states::IdleState);
+        assert_eq!(initial_state.status(), StateMachineStatus::Idle);
+
+        let pin_entry_state = initial_state.handle_input(&mut context, "card_inserted").await.unwrap();
+        assert_eq!(context.current_state, StateMachineStatus::PinEntry);
+        assert_eq!(pin_entry_state.status(), StateMachineStatus::PinEntry);
+
+        let pin_input = "1234";
+        let tx_select_state = pin_entry_state.handle_input(&mut context, pin_input).await.unwrap();
+        assert_eq!(context.current_state, StateMachineStatus::TxSelect);
+        assert_eq!(tx_select_state.status(), StateMachineStatus::TxSelect);
+    }
+}
