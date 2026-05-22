@@ -1,3 +1,5 @@
+// src/main.rs
+
 mod auth;
 mod crypto;
 mod hardware;
@@ -33,15 +35,17 @@ async fn main() -> Result<(), String> {
 
     println!("\n[UI User Approaches Terminal...]");
     
-    let card_token = reader.scan_card();
-    println!("Card processing event received: {:?}", card_token);
+    // Safely capture Result wrapper
+    let card_token = reader.scan_card()?;
+    println!("Card processing event received token: {:?}", card_token);
     
     println!("\n[UI Screen Prompt: Please enter your 4-digit PIN]");
     let current_state: Box<dyn AtmState> = Box::new(states::IdleState);
     
     let pin_input = "1234"; 
-    let next_state = current_state.handle_input(&mut context, pin_input).await?;
-    println!("Transitioned State Level to: {:?}", next_state.status());
+    let next_state = current_state.handle_input(&mut context, "card_inserted").await?;
+    let verified_state = next_state.handle_input(&mut context, pin_input).await?;
+    println!("Transitioned State Level to: {:?}", verified_state.status());
 
     context.selected_token = Some("USDC".to_string());
     let fiat_amount_requested = 200;
@@ -49,12 +53,12 @@ async fn main() -> Result<(), String> {
 
     let deposit_address = HotWalletManager::generate_session_address("USDC");
     
-    // Will compile smoothly now thanks to the oracle instance method fix
+    // Solves your associated method compilation block cleanly
     let spot_price = oracle.get_spot_price("USDC").await?;
     
-    let token_amount_required = (fiat_amount_requested as f64) / (spot_price.to_string().parse::<f64>().unwrap());
+    let token_amount_required = (fiat_amount_requested as f64) / (spot_price.to_string().parse::<f64>().unwrap_or(1.0));
 
-    // Pulling these cleanly out from the declared submodule tree space
+    // Properly initialized based on child modules
     let qr_screen = states::crypto_qr::CryptoQrState::new(&deposit_address, token_amount_required);
     qr_screen.display_matrix_payload();
 
