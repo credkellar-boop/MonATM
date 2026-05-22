@@ -20,13 +20,19 @@ MonATM is a modular, high-performance engine written in Rust for managing secure
 1. Clone the repository.
 2. Configure `Config.toml` for your specific hardware paths and RPC endpoints.
 3. Build the project:
-   ```bash
-   cargo build --release
 
-======================================
+    cargo build --release
 
+Or run via Docker Compose:
+
+    docker-compose up --build
+
+## 🏗️ Project Structure
+
+The project follows a modular, domain-driven architecture:
+
+<pre>
 monatm/
-
 ├── .github/          # CI/CD workflows for testing and validation
 ├── src/              # Core application source code
 │   ├── auth/         # Security & Identity validation
@@ -42,4 +48,4 @@ monatm/
 ├── Config.toml       # Runtime environment & hardware settings
 ├── Dockerfile        # Multi-stage Docker build configuration
 └── docker-compose.yml# Container orchestration configuration
-ation
+</pre>
