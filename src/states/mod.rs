@@ -4,6 +4,10 @@ use uuid::Uuid;
 
 use crate::auth::secure_auth::SecureAuthService;
 
+// Mount the separate files present in the folder
+pub mod crypto_qr;
+pub mod crypto_wait;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum StateMachineStatus {
     Idle,
