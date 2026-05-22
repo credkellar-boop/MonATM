@@ -23,7 +23,7 @@ MonATM is a modular, high-performance engine written in Rust for managing secure
    ```bash
    cargo build --release
 
-docker-compose up --build
+===================================================
 
 monatm/
 ├── .github/          # CI/CD workflows for testing and validation
