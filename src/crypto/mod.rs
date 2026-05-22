@@ -1,5 +1,3 @@
-// src/crypto/mod.rs
-
 pub mod client;
 pub mod oracle;
 pub mod wallet;
